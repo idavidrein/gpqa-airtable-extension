@@ -1,8 +1,18 @@
 import {initializeBlock, useBase, useRecords, Button} from '@airtable/blocks/ui';
 import React from 'react';
 
-function numElements(record, field) {
-  return record.getCellValue(field) === null ? 0 : record.getCellValue(field).length;
+let domainIncompatibilities = {
+  "Physics": ["Engineering"],
+  "Engineering": ["Physics"],
+  "Math": ["Physics", "Engineering"],
+  "Chemistry (general)": ["Chemical Engineering"], 
+  "Chemical Engineering": ["Chemistry (general)"],
+  "Computer Science": ["Machine Learning"],
+  "Machine Learning": ["Computer Science"],
+  "Biology": [],
+  "Finance/Economics": [],
+  "Medicine": [],
+  "Philosophy": []
 }
 
 async function shuffleRecords(table, records) {
@@ -107,8 +117,10 @@ async function assignNonExpertValidators(table, records, people) {
       continue;
     }
     let assignableRecords = records.filter(record => {
-        let domain = record.getCellValueAsString("Domain (from Linked Expert)");
-        return person.getCellValueAsString("Domain") !== domain
+        let recordDomain = record.getCellValueAsString("Domain (from Linked Expert)");
+        let personDomain = person.getCellValueAsString("Domain");
+        return personDomain !== recordDomain
+        && !domainIncompatibilities[personDomain].includes(recordDomain)
         && record.getCellValueAsString("Is Revised") === "True"
         && record.getCellValueAsString("Assigned Non-Expert Validator 1 (Uncompleted)") !== person.name
         && record.getCellValueAsString("Assigned Non-Expert Validator 2 (Uncompleted)") !== person.name
