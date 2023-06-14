@@ -58,141 +58,78 @@ async function shuffleRecords(table, records) {
 
 async function assignExpertValidators(table, records, people) {
   console.log(`Assigning expert validators to ${records.length} records...`)
-
-  for (let record of records) {
-
-    for (let valIdx = 0; valIdx < 2; valIdx++) {
-
-      // only assign an expert validator if there isn't already one assigned
-      if (numElements(record, `Assigned Expert Validator ${valIdx+1} (Uncompleted)`) > 0) {
-        continue;
-      }
-      // don't assign the first expert validator if the question has already been revised
-      if (valIdx === 0 && record.getCellValueAsString("Is Revised") === "True") {
-        continue;
-      }
-      // don't assign the second expert validator if the question hasn't been revised yet
-      if (valIdx === 1 && record.getCellValueAsString("Is Revised") !== "True") {
-        continue;
-      }
-      // if we're assigning the second expert validator, make sure not to assign the same expert as the first expert validator
-      var firstExpertValidator;
-      if (valIdx === 1) {
-        if (record.getCellValue("Original Question") === null) {
-          console.log('No original question linked in this record')
-          continue;
-        }
-        let originalQuestion = record.getCellValue("Original Question")[0].id;
-        console.log("Original question", record.getCellValue("Original Question")[0].name)
-        let originalQuestionRecord = records.filter(record => record.id === originalQuestion)[0];
-        console.log("Original question record", originalQuestionRecord)
-        firstExpertValidator = originalQuestionRecord.getCellValue("Assigned Expert Validator 1");
-      }
-      console.log("First expert validator", firstExpertValidator)
-
-      let domain = record.getCellValueAsString("Domain (from Linked Expert)");
-      // get all people in the same domain as the question, excluding the question writer and any experts already assigned to the question
-      let experts = people.filter(person => {
-        if (valIdx === 1) {
-          if (person.name === firstExpertValidator) {
-            return false;
-          }
-        }
-        return person.getCellValueAsString("Domain") === domain && person.name !== record.getCellValueAsString("Linked Expert")
-      });
-      console.log("Domain experts", domain, experts.map(person => person.name))
-
-      // don't assign any validators if there aren't any non-experts
-      if (experts.length === 0) {
-        continue;
-      }
-
-      // choose the non-expert with the fewest assigned questions to be the non-expert validator, ensuring that the same non-expert is not chosen twice
-      var minAssignments = 10;
-      for (let i = 0; i < experts.length; i++) {
-        let numAssignments = experts[i].getCellValue("Num Assigned Expert Val");
-        if (numAssignments < minAssignments) {
-          var expertValidator = experts[i];
-          minAssignments = numAssignments;
+  let sorted_people = people.sort((a, b) => a.getCellValue("Num Assigned Expert Val") - b.getCellValue("Num Assigned Expert Val"))
+  for (let person of sorted_people) {
+    console.log(person.name)
+    if (person.getCellValueAsString("Active Expert Validator") !== "checked" || person.name === "NULL") {
+      continue; // only assign expert validators who are active and not NULL
+    }
+    let assignableRecords = records.filter(record => {
+        let domain = record.getCellValueAsString("Domain (from Linked Expert)");
+        let isRevised = record.getCellValueAsString("Is Revised") === "True";
+        return person.getCellValueAsString("Domain") === domain
+        && record.getCellValueAsString("Linked Expert") !== person.name // don't assign the expert validator to their own question
+        && record.getCellValueAsString("Assigned Expert Validator 1 (Uncompleted)") !== person.name
+        && record.getCellValueAsString("Assigned Expert Validator 2 (Uncompleted)") !== person.name
+        && ((record.getCellValue("Assigned Expert Validator 1 (Uncompleted)") === null && !isRevised)
+          || (record.getCellValue("Assigned Expert Validator 2 (Uncompleted)") === null && isRevised))
+        })
+    console.log(assignableRecords.map(record => record.name))
+    if (assignableRecords.length < 2) {
+      continue;
+    }
+    for (let i = 0; i < 2; i++) {
+      let record = assignableRecords[i];
+      for (let j = 0; j < 2; j++) {
+        // these continues mean that we can't guarantee that everyone will be assigned to 2 questions
+        // at the same time
+        if (j === 0 && record.getCellValue("Is Revised") === "True") {continue;}
+        if (j === 1 && record.getCellValue("Is Revised") !== "True") {continue;}
+        if (record.getCellValue(`Assigned Expert Validator ${j+1} (Uncompleted)`) === null) {
+          await table.updateRecordAsync(record, {
+            [`Assigned Expert Validator ${j+1} (Uncompleted)`]: [{id: person.id}],
+            [`Assigned Expert Validator ${j+1}`]: person.name
+          });
+          break;
         }
       }
-
-      // assign the expert validator to the question
-      await table.updateRecordAsync(record, {
-        [`Assigned Expert Validator ${valIdx+1} (Uncompleted)`]: [{id: expertValidator.id}],
-        [`Assigned Expert Validator ${valIdx+1}`]: expertValidator.name
-      });
     }
   }
 }
 
-async function assignNonExpertValidators(table, records, people, expertValidationRecords) {
+async function assignNonExpertValidators(table, records, people) {
   console.log(`Assigning non-expert validators to ${records.length} records...`)
-  console.log(`Experts: ${people.map(person => person.name)}`)
-  
-  for (let record of records) {
-    // don't assign any non-expert validators until the question has been revised
-    if (record.getCellValueAsString("Is Revised") !== "True") {
+  let sorted_people = people.sort((a, b) => a.getCellValue("Num Assigned Non-Expert Val") - b.getCellValue("Num Assigned Non-Expert Val"))
+  console.log(sorted_people.map(person => person.name))
+  for (let person of sorted_people) {
+    if (person.getCellValueAsString("Active Non-Expert Validator") !== "checked" || person.name === "NULL") {
+      // only assign non-expert validators who are active and not NULL
       continue;
     }
-    for (let valIdx = 0; valIdx < 3; valIdx++) {
-      // keep track of which non-experts have already been chosen as validators
-      var chosenNonExpertValidators = [
-        record.getCellValue("Assigned Non-Expert Validator 1 (Uncompleted)"),
-        record.getCellValue("Assigned Non-Expert Validator 2 (Uncompleted)"),
-        record.getCellValue("Assigned Non-Expert Validator 3 (Uncompleted)")
-      ].filter(record => record !== null).map(record => record[0]);
-      console.log("Already chosen", chosenNonExpertValidators.map(person => person.name))
-
-      // only assign a non-expert validator if there isn't already one assigned
-      if (numElements(record, `Assigned Non-Expert Validator ${valIdx+1} (Uncompleted)`) > 0) {
-        continue;
-      }
-      let domain = record.getCellValueAsString("Domain (from Linked Expert)");
-      
-      // only get people who aren't assigned as the first expert validator or who have pending question revisions
-      let currentlyAssignedFirstExpertVal1 = records.map(record => record.getCellValueAsString('Assigned Expert Validator 1 (Uncompleted)'))
-      console.log("Currently assigned first expert val 1", currentlyAssignedFirstExpertVal1)
-      let currentlyAssignedQuestionRevision = expertValidationRecords.filter(
-        record => record.getCellValueAsString("To Be Revised") !== "False").map(
-        record => record.getCellValueAsString("Question Writer"))
-      console.log("Currently assigned question revision", currentlyAssignedQuestionRevision)
-
-      // get all people in different domains as the question
-      let nonExperts = people.filter(person => 
-        person.getCellValueAsString("Domain") !== domain 
-        && person.name !== "NULL"
-        && !currentlyAssignedFirstExpertVal1.includes(person.name)
-        && !currentlyAssignedQuestionRevision.includes(person.name));
-      console.log("Domain non-experts", domain, nonExperts.map(person => person.name))
-
-      // don't assign any validators if there aren't any non-experts
-      if (nonExperts.length === 0) {
-        continue;
-      }
-
-      // choose the non-expert with the fewest assigned questions to be the non-expert validator, ensuring that the same non-expert is not chosen twice
-      var minAssignments = 10;
-      var nonExpertValidator;
-      for (let i = 0; i < nonExperts.length; i++) {
-        if (chosenNonExpertValidators.some(nonExpert => nonExpert.id === nonExperts[i].id)) {
-          console.log(`Already chosen num assigned non-expert val: ${nonExperts[i].getCellValue("Num Assigned Non-Expert Val")}`)
-          continue;
+    let assignableRecords = records.filter(record => {
+        let domain = record.getCellValueAsString("Domain (from Linked Expert)");
+        return person.getCellValueAsString("Domain") !== domain
+        && record.getCellValueAsString("Is Revised") === "True"
+        && record.getCellValueAsString("Assigned Non-Expert Validator 1 (Uncompleted)") !== person.name
+        && record.getCellValueAsString("Assigned Non-Expert Validator 2 (Uncompleted)") !== person.name
+        && record.getCellValueAsString("Assigned Non-Expert Validator 3 (Uncompleted)") !== person.name
+        && (record.getCellValue("Assigned Non-Expert Validator 1 (Uncompleted)") === null
+          || record.getCellValue("Assigned Non-Expert Validator 2 (Uncompleted)") === null
+          || record.getCellValue("Assigned Non-Expert Validator 3 (Uncompleted)") === null)
+        })
+    if (assignableRecords.length < 3) {
+      continue;
+    }
+    console.log(assignableRecords.map(record => record.name))
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        if (assignableRecords[i].getCellValue(`Assigned Non-Expert Validator ${j+1} (Uncompleted)`) === null) {
+          await table.updateRecordAsync(assignableRecords[i], {
+            [`Assigned Non-Expert Validator ${j+1} (Uncompleted)`]: [{id: person.id}],
+            [`Assigned Non-Expert Validator ${j+1}`]: person.name
+          });
+          break;
         }
-        let numAssignments = nonExperts[i].getCellValue("Num Assigned Non-Expert Val");
-        console.log(`Name: ${nonExperts[i].name}, num assignments: ${numAssignments}`)
-        if (numAssignments < minAssignments) {
-          nonExpertValidator = nonExperts[i];
-          minAssignments = numAssignments;
-        }
-      }
-
-      // assign the expert validators to the question
-      if (nonExpertValidator !== undefined) {
-        await table.updateRecordAsync(record, {
-            [`Assigned Non-Expert Validator ${valIdx+1} (Uncompleted)`]: [{id: nonExpertValidator.id}],
-            [`Assigned Non-Expert Validator ${valIdx+1}`]: nonExpertValidator.name
-        });
       }
     }
   }
@@ -220,7 +157,7 @@ function ShuffleOptions() {
   };
 
   const onNonExpertClick = () => {
-    assignNonExpertValidators(table, records, people, expertValidationRecords)
+    assignNonExpertValidators(table, records, people)
   };
 
   return (
