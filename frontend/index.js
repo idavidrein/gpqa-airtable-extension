@@ -78,6 +78,7 @@ async function assignExpertValidators(table, records, people) {
         let domain = record.getCellValueAsString("Domain (from Linked Expert)");
         let isRevised = record.getCellValueAsString("Is Revised") === "True";
         return person.getCellValueAsString("Domain") === domain
+        && record.getCellValueAsString("Inactive") !== "checked" // don't assign to inactive questions
         && record.getCellValueAsString("Linked Expert") !== person.name // don't assign the expert validator to their own question
         && record.getCellValueAsString("Assigned Expert Validator 1 (Uncompleted)") !== person.name
         && record.getCellValueAsString("Assigned Expert Validator 2 (Uncompleted)") !== person.name
@@ -120,6 +121,7 @@ async function assignNonExpertValidators(table, records, people) {
         let recordDomain = record.getCellValueAsString("Domain (from Linked Expert)");
         let personDomain = person.getCellValueAsString("Domain");
         return personDomain !== recordDomain
+        && record.getCellValueAsString("Inactive") !== "checked" // don't assign to inactive questions
         && !domainIncompatibilities[personDomain].includes(recordDomain)
         && record.getCellValueAsString("Is Revised") === "True"
         && record.getCellValueAsString("Assigned Non-Expert Validator 1 (Uncompleted)") !== person.name
