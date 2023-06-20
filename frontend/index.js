@@ -1,19 +1,50 @@
 import {initializeBlock, useBase, useRecords, Button} from '@airtable/blocks/ui';
 import React from 'react';
 
-let domainIncompatibilities = {
-  "Physics (general)": ["Engineering"],
-  "Engineering": ["Physics (general)"],
-  "Math": ["Physics (general)", "Engineering"],
-  "Chemistry (general)": ["Chemical Engineering"], 
-  "Chemical Engineering": ["Chemistry (general)"],
-  "Computer Science": ["Machine Learning"],
-  "Machine Learning": ["Computer Science"],
-  "Biology": [],
-  "Finance/Economics": [],
-  "Medicine": [],
-  "Philosophy": []
+// a set of domains listed and "initialized" below indicates that each domain in a set
+// is incompatible with every other domain in the set
+let chemistryDomains = [
+  "Biochemistry", 
+  "Chemistry (general)", 
+  "Chemical Engineering", 
+  "Organic Chemistry"
+]
+let physicsDomains = [
+  "Physics (general)", 
+  "Engineering (general)", 
+  "Condensed Matter Physics", 
+  "Quantum Mechanics", 
+  "Electromagnetism and Photonics", 
+  "High-energy particle physics", 
+  "Relativistic Mechanics", 
+  "Statistical Mechanics", 
+  "Optics and Acoustics"
+]
+let biologyDomains = [
+  "Biology (general)",
+  "Genetics",
+  "Molecular Biology",
+  "Biochemistry",
+]
+let computerScienceDomains = [
+  "Computer Science",
+  "Machine Learning"
+]
+
+var domainIncompatibilities = {}
+function initializeDomainIncompatibilities(domainSet) {
+  for (let domain of domainSet) {
+    domainIncompatibilities[domain] = domainSet.filter(d => d !== domain)
+  }
 }
+initializeDomainIncompatibilities(chemistryDomains)
+initializeDomainIncompatibilities(physicsDomains)
+initializeDomainIncompatibilities(biologyDomains)
+initializeDomainIncompatibilities(computerScienceDomains)
+
+domainIncompatibilities["Biochemistry"].push(["Genetics", "Molecular Biology"])
+domainIncompatibilities["Math"].push(computerScienceDomains.concat(physicsDomains))
+
 
 async function shuffleRecords(table, records) {
   let shuffled_names = ["Shuffled 1", "Shuffled 2", "Shuffled 3", "Shuffled 4", "Shuffled Correct Index"]
