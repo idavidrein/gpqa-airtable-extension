@@ -2,9 +2,9 @@ import {initializeBlock, useBase, useRecords, Button} from '@airtable/blocks/ui'
 import React from 'react';
 
 let domainIncompatibilities = {
-  "Physics": ["Engineering"],
-  "Engineering": ["Physics"],
-  "Math": ["Physics", "Engineering"],
+  "Physics (general)": ["Engineering"],
+  "Engineering": ["Physics (general)"],
+  "Math": ["Physics (general)", "Engineering"],
   "Chemistry (general)": ["Chemical Engineering"], 
   "Chemical Engineering": ["Chemistry (general)"],
   "Computer Science": ["Machine Learning"],
@@ -74,10 +74,11 @@ async function assignExpertValidators(table, records, people) {
     if (person.getCellValueAsString("Active Expert Validator") !== "checked" || person.name === "NULL") {
       continue; // only assign expert validators who are active and not NULL
     }
+    let personDomains = person.getCellValue("Domain").map(domain => domain.name);
     let assignableRecords = records.filter(record => {
-        let domain = record.getCellValueAsString("Domain (from Linked Expert)");
+        let domain = record.getCellValueAsString("Question Domain");
         let isRevised = record.getCellValueAsString("Is Revised") === "True";
-        return person.getCellValueAsString("Domain") === domain
+        return personDomains.includes(domain)
         && record.getCellValueAsString("Inactive") !== "checked" // don't assign to inactive questions
         && record.getCellValueAsString("Linked Expert") !== person.name // don't assign the expert validator to their own question
         && record.getCellValueAsString("Assigned Expert Validator 1 (Uncompleted)") !== person.name
@@ -114,17 +115,23 @@ async function assignNonExpertValidators(table, records, people) {
   console.log(`Assigning non-expert validators to ${records.length} records...`)
   let sorted_people = people.sort((a, b) => a.getCellValue("Num Assigned Non-Expert Val") - b.getCellValue("Num Assigned Non-Expert Val"))
   console.log(sorted_people.map(person => person.name))
+
+  function checkDomainCompatibility(personDomains, recordDomain) {
+    // for each domain the person is an expert in, check if they can be a non-expert validator for the record's domain
+    return personDomains.every(personDomain => !domainIncompatibilities[personDomain].includes(recordDomain))
+  }
+
   for (let person of sorted_people) {
     if (person.getCellValueAsString("Active Non-Expert Validator") !== "checked" || person.name === "NULL") {
       // only assign non-expert validators who are active and not NULL
       continue;
     }
+    let personDomains = person.getCellValue("Domain").map(domain => domain.name);
     let assignableRecords = records.filter(record => {
         let recordDomain = record.getCellValueAsString("Domain (from Linked Expert)");
-        let personDomain = person.getCellValueAsString("Domain");
-        return personDomain !== recordDomain
+        return personDomains.includes(recordDomain)
         && record.getCellValueAsString("Inactive") !== "checked" // don't assign to inactive questions
-        && !domainIncompatibilities[personDomain].includes(recordDomain)
+        && checkDomainCompatibility(personDomains, recordDomain)
         && record.getCellValueAsString("Is Revised") === "True"
         && record.getCellValueAsString("Assigned Non-Expert Validator 1 (Uncompleted)") !== person.name
         && record.getCellValueAsString("Assigned Non-Expert Validator 2 (Uncompleted)") !== person.name
