@@ -86,10 +86,12 @@ async function assignExpertValidators(table, records, people) {
           || (record.getCellValue("Assigned Expert Validator 2 (Uncompleted)") === null && isRevised))
         })
     console.log(assignableRecords.map(record => record.name))
-    if (assignableRecords.length < 2) {
+
+    let numRecordsToAssign = 2;
+    if (assignableRecords.length < numRecordsToAssign) {
       continue;
     }
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < numRecordsToAssign; i++) {
       let record = assignableRecords[i];
       for (let j = 0; j < 2; j++) {
         // these continues mean that we can't guarantee that everyone will be assigned to 2 questions
@@ -131,11 +133,13 @@ async function assignNonExpertValidators(table, records, people) {
           || record.getCellValue("Assigned Non-Expert Validator 2 (Uncompleted)") === null
           || record.getCellValue("Assigned Non-Expert Validator 3 (Uncompleted)") === null)
         })
-    if (assignableRecords.length < 3) {
+
+    let numRecordsToAssign = 3;
+    if (assignableRecords.length < numRecordsToAssign) {
       continue;
     }
     console.log(assignableRecords.map(record => record.name))
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < numRecordsToAssign; i++) {
       for (let j = 0; j < 3; j++) {
         if (assignableRecords[i].getCellValue(`Assigned Non-Expert Validator ${j+1} (Uncompleted)`) === null) {
           await table.updateRecordAsync(assignableRecords[i], {
@@ -155,12 +159,10 @@ function ShuffleOptions() {
   let notShuffled = table.getView("Not Shuffled")
   let peopleTable = base.getTable("Experts");
   let people = useRecords(peopleTable)
-  let expertValidationTable = base.getTable("Expert Validations");
 
   // use the useRecords hook to re-render the block whenever records are changed
   let notShuffledRecords = useRecords(notShuffled);
   let records = useRecords(table);
-  let expertValidationRecords = useRecords(expertValidationTable);
 
   const onShuffleClick = () => {
     shuffleRecords(table, notShuffledRecords)
