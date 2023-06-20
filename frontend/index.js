@@ -43,7 +43,7 @@ initializeDomainIncompatibilities(biologyDomains)
 initializeDomainIncompatibilities(computerScienceDomains)
 
 domainIncompatibilities["Biochemistry"].push(["Genetics", "Molecular Biology"])
-domainIncompatibilities["Math"].push(computerScienceDomains.concat(physicsDomains))
+domainIncompatibilities["Math"] = computerScienceDomains.concat(physicsDomains)
 
 
 async function shuffleRecords(table, records) {
@@ -144,7 +144,9 @@ async function assignExpertValidators(table, records, people) {
 
 async function assignNonExpertValidators(table, records, people) {
   console.log(`Assigning non-expert validators to ${records.length} records...`)
-  let sorted_people = people.sort((a, b) => a.getCellValue("Num Assigned Non-Expert Val") - b.getCellValue("Num Assigned Non-Expert Val"))
+  var sorted_people = people.sort((a, b) => a.getCellValue("Num Assigned Non-Expert Val") - b.getCellValue("Num Assigned Non-Expert Val"))
+  // only assign non-expert validators who are active and not NULL
+  sorted_people = sorted_people.filter(person => person.getCellValueAsString("Active Non-Expert Validator") === "checked" && person.name !== "NULL")
   console.log(sorted_people.map(person => person.name))
 
   function checkDomainCompatibility(personDomains, recordDomain) {
@@ -153,10 +155,6 @@ async function assignNonExpertValidators(table, records, people) {
   }
 
   for (let person of sorted_people) {
-    if (person.getCellValueAsString("Active Non-Expert Validator") !== "checked" || person.name === "NULL") {
-      // only assign non-expert validators who are active and not NULL
-      continue;
-    }
     let personDomains = person.getCellValue("Domain").map(domain => domain.name);
     let assignableRecords = records.filter(record => {
         let recordDomain = record.getCellValueAsString("Domain (from Linked Expert)");
