@@ -24,7 +24,6 @@ let biologyDomains = [
   "Biology (general)",
   "Genetics",
   "Molecular Biology",
-  "Biochemistry",
 ]
 let computerScienceDomains = [
   "Computer Science",
@@ -42,7 +41,7 @@ initializeDomainIncompatibilities(physicsDomains)
 initializeDomainIncompatibilities(biologyDomains)
 initializeDomainIncompatibilities(computerScienceDomains)
 
-domainIncompatibilities["Biochemistry"].push(["Genetics", "Molecular Biology"])
+domainIncompatibilities["Biochemistry"].push(...["Genetics", "Molecular Biology"])
 domainIncompatibilities["Math"] = computerScienceDomains.concat(physicsDomains)
 
 
