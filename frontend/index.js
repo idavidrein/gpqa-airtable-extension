@@ -120,6 +120,7 @@ async function assignExpertValidators(table, records, people) {
 
     let numRecordsToAssign = 2;
     if (assignableRecords.length < numRecordsToAssign) {
+      console.log(`Only ${assignableRecords.length} records to assign to ${person.name}...`)
       continue;
     }
     for (let i = 0; i < numRecordsToAssign; i++) {
