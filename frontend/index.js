@@ -157,7 +157,7 @@ async function assignNonExpertValidators(table, records, people) {
   for (let person of sorted_people) {
     let personDomains = person.getCellValue("Domain").map(domain => domain.name);
     let assignableRecords = records.filter(record => {
-        let recordDomain = record.getCellValueAsString("Domain (from Linked Expert)");
+        let recordDomain = record.getCellValueAsString("Question Domain");
         return !personDomains.includes(recordDomain)
         && record.getCellValueAsString("Inactive") !== "checked" // don't assign to inactive questions
         && checkDomainCompatibility(personDomains, recordDomain)
