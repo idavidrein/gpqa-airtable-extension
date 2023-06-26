@@ -99,11 +99,10 @@ async function shuffleRecords(table, records) {
 async function assignExpertValidators(table, records, people) {
   console.log(`Assigning expert validators to ${records.length} records...`)
   let sorted_people = people.sort((a, b) => a.getCellValue("Num Assigned Expert Val") - b.getCellValue("Num Assigned Expert Val"))
+  // only assign expert validators who are active and not NULL
+  sorted_people = sorted_people.filter(person => person.getCellValueAsString("Active Expert Validator") === "checked" && person.name !== "NULL")
   for (let person of sorted_people) {
     console.log(person.name)
-    if (person.getCellValueAsString("Active Expert Validator") !== "checked" || person.name === "NULL") {
-      continue; // only assign expert validators who are active and not NULL
-    }
     let personDomains = person.getCellValue("Domain").map(domain => domain.name);
     let assignableRecords = records.filter(record => {
         let domain = record.getCellValueAsString("Question Domain");
@@ -111,10 +110,10 @@ async function assignExpertValidators(table, records, people) {
         return personDomains.includes(domain)
         && record.getCellValueAsString("Inactive") !== "checked" // don't assign to inactive questions
         && record.getCellValueAsString("Linked Expert") !== person.name // don't assign the expert validator to their own question
-        && record.getCellValueAsString("Assigned Expert Validator 1 (Uncompleted)") !== person.name
-        && record.getCellValueAsString("Assigned Expert Validator 2 (Uncompleted)") !== person.name
-        && ((record.getCellValue("Assigned Expert Validator 1 (Uncompleted)") === null && !isRevised)
-          || (record.getCellValue("Assigned Expert Validator 2 (Uncompleted)") === null && isRevised))
+        && record.getCellValueAsString("Assigned Expert Validator 1") !== person.name
+        && record.getCellValueAsString("Assigned Expert Validator 2") !== person.name
+        && ((record.getCellValue("Assigned Expert Validator 1") === null && !isRevised)
+          || (record.getCellValue("Assigned Expert Validator 2") === null && isRevised))
         })
     console.log(assignableRecords.map(record => record.name))
 
@@ -125,19 +124,15 @@ async function assignExpertValidators(table, records, people) {
     }
     for (let i = 0; i < numRecordsToAssign; i++) {
       let record = assignableRecords[i];
-      for (let j = 0; j < 2; j++) {
-        // these continues mean that we can't guarantee that everyone will be assigned to 2 questions
-        // at the same time
-        if (j === 0 && record.getCellValue("Is Revised") === "True") {continue;}
-        if (j === 1 && record.getCellValue("Is Revised") !== "True") {continue;}
-        if (record.getCellValue(`Assigned Expert Validator ${j+1} (Uncompleted)`) === null) {
-          await table.updateRecordAsync(record, {
-            [`Assigned Expert Validator ${j+1} (Uncompleted)`]: [{id: person.id}],
-            [`Assigned Expert Validator ${j+1}`]: person.name
-          });
-          break;
-        }
+      var validator_idx = 0;
+      if (record.getCellValueAsString("Is Revised") === "True") {
+        validator_idx = 1;
       }
+      console.assert(record.getCellValue(`Assigned Expert Validator ${validator_idx+1}`) === null)
+      await table.updateRecordAsync(record, {
+        [`Assigned Expert Validator ${validator_idx+1} (Uncompleted)`]: [{id: person.id}],
+        [`Assigned Expert Validator ${validator_idx+1}`]: person.name
+      });
     }
   }
 }
@@ -155,6 +150,7 @@ async function assignNonExpertValidators(table, records, people) {
   }
 
   for (let person of sorted_people) {
+    console.log(person.name)
     let personDomains = person.getCellValue("Domain").map(domain => domain.name);
     let assignableRecords = records.filter(record => {
         let recordDomain = record.getCellValueAsString("Question Domain");
@@ -162,9 +158,9 @@ async function assignNonExpertValidators(table, records, people) {
         && record.getCellValueAsString("Inactive") !== "checked" // don't assign to inactive questions
         && checkDomainCompatibility(personDomains, recordDomain)
         && record.getCellValueAsString("Is Revised") === "True"
-        && record.getCellValueAsString("Assigned Non-Expert Validator 1 (Uncompleted)") !== person.name
-        && record.getCellValueAsString("Assigned Non-Expert Validator 2 (Uncompleted)") !== person.name
-        && record.getCellValueAsString("Assigned Non-Expert Validator 3 (Uncompleted)") !== person.name
+        && record.getCellValueAsString("Assigned Non-Expert Validator 1") !== person.name
+        && record.getCellValueAsString("Assigned Non-Expert Validator 2") !== person.name
+        && record.getCellValueAsString("Assigned Non-Expert Validator 3") !== person.name
         && (record.getCellValue("Assigned Non-Expert Validator 1 (Uncompleted)") === null
           || record.getCellValue("Assigned Non-Expert Validator 2 (Uncompleted)") === null
           || record.getCellValue("Assigned Non-Expert Validator 3 (Uncompleted)") === null)
