@@ -101,6 +101,9 @@ async function assignExpertValidators(table, records, people) {
   let sorted_people = people.sort((a, b) => a.getCellValue("Num Assigned Expert Val") - b.getCellValue("Num Assigned Expert Val"))
   // only assign expert validators who are active and not NULL
   sorted_people = sorted_people.filter(person => person.getCellValueAsString("Active Expert Validator") === "checked" && person.name !== "NULL")
+  sorted_people = sorted_people.filter(person => person.getCellValueAsString("Num Expert Validations To Be Assigned") > 0)
+  console.log(sorted_people.map(person => person.name))
+
   for (let person of sorted_people) {
     console.log(person.name)
     let personDomains = person.getCellValue("Domain").map(domain => domain.name);
@@ -142,6 +145,7 @@ async function assignNonExpertValidators(table, records, people) {
   var sorted_people = people.sort((a, b) => a.getCellValue("Num Assigned Non-Expert Val") - b.getCellValue("Num Assigned Non-Expert Val"))
   // only assign non-expert validators who are active and not NULL
   sorted_people = sorted_people.filter(person => person.getCellValueAsString("Active Non-Expert Validator") === "checked" && person.name !== "NULL")
+  sorted_people = sorted_people.filter(person => person.getCellValueAsString("Num Non-Expert Validations To Be Assigned") > 0)
   console.log(sorted_people.map(person => person.name))
 
   function checkDomainCompatibility(personDomains, recordDomain) {
@@ -165,9 +169,11 @@ async function assignNonExpertValidators(table, records, people) {
           || record.getCellValue("Assigned Non-Expert Validator 2 (Uncompleted)") === null
           || record.getCellValue("Assigned Non-Expert Validator 3 (Uncompleted)") === null)
         })
+    console.log(assignableRecords.map(record => record.name))
 
     let numRecordsToAssign = 3;
     if (assignableRecords.length < numRecordsToAssign) {
+      console.log(`Only ${assignableRecords.length} records to assign to ${person.name}...`)
       continue;
     }
     console.log(assignableRecords.map(record => record.name))
