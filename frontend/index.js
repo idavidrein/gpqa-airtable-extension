@@ -23,7 +23,7 @@ function Interface() {
   };
 
   const onExpertClick = async () => {
-    const proposals = await assignExpertValidators(table, records, people, true) 
+    const proposals = await assignExpertValidators(records, people) 
     setProposedAssignments(proposals); // save proposals in state
   };
 

@@ -49,7 +49,7 @@ let chemistryDomains = [
     });
   }  
 
-  async function assignExpertValidators(table, records, people) {
+  async function assignExpertValidators(records, people) {
     console.log(`Assigning expert validators to ${records.length} records...`)
     let sorted_people = people.sort((a, b) => a.getCellValue("Num Assigned Expert Val") - b.getCellValue("Num Assigned Expert Val"))
     // only assign expert validators who are active and not NULL
