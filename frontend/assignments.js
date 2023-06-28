@@ -40,8 +40,15 @@ let chemistryDomains = [
   
   domainIncompatibilities["Biochemistry"].push(...["Genetics", "Molecular Biology"])
   domainIncompatibilities["Math"] = computerScienceDomains.concat(physicsDomains)
-  
-  
+
+  async function assignRecordToExpert(table, record, expert, validator_idx) {
+    console.assert(record.getCellValue(`Assigned Expert Validator ${validator_idx+1}`) === null)
+    await table.updateRecordAsync(record, {
+      [`Assigned Expert Validator ${validator_idx+1} (Uncompleted)`]: [{id: expert.id}],
+      [`Assigned Expert Validator ${validator_idx+1}`]: expert.name
+    });
+  }  
+
   async function assignExpertValidators(table, records, people) {
     console.log(`Assigning expert validators to ${records.length} records...`)
     let sorted_people = people.sort((a, b) => a.getCellValue("Num Assigned Expert Val") - b.getCellValue("Num Assigned Expert Val"))
@@ -49,6 +56,8 @@ let chemistryDomains = [
     sorted_people = sorted_people.filter(person => person.getCellValueAsString("Active Expert Validator") === "checked" && person.name !== "NULL")
     sorted_people = sorted_people.filter(person => person.getCellValueAsString("Num Expert Validations To Be Assigned") > 0)
     console.log(sorted_people.map(person => person.name))
+
+    let proposals = [];
   
     for (let person of sorted_people) {
       console.log(person.name)
@@ -66,24 +75,22 @@ let chemistryDomains = [
           })
       console.log(assignableRecords.map(record => record.name))
   
-      let numRecordsToAssign = 2;
+      let numRecordsToAssign = 1;
       if (assignableRecords.length < numRecordsToAssign) {
         console.log(`Only ${assignableRecords.length} records to assign to ${person.name}...`)
         continue;
       }
-      for (let i = 0; i < numRecordsToAssign; i++) {
-        let record = assignableRecords[i];
+      for (let record of assignableRecords) {
         var validator_idx = 0;
         if (record.getCellValueAsString("Is Revised") === "True") {
           validator_idx = 1;
         }
         console.assert(record.getCellValue(`Assigned Expert Validator ${validator_idx+1}`) === null)
-        await table.updateRecordAsync(record, {
-          [`Assigned Expert Validator ${validator_idx+1} (Uncompleted)`]: [{id: person.id}],
-          [`Assigned Expert Validator ${validator_idx+1}`]: person.name
-        });
+        proposals.push({record: record, expert: person, validator_idx: validator_idx});
       }
     }
+
+    return proposals;
   }
   
   async function assignNonExpertValidators(table, records, people) {
@@ -138,4 +145,4 @@ let chemistryDomains = [
   }
   
 
-  export {assignExpertValidators, assignNonExpertValidators}
+  export {assignRecordToExpert, assignExpertValidators, assignNonExpertValidators}
