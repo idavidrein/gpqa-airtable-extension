@@ -1,11 +1,11 @@
 // a set of domains listed and "initialized" below indicates that each domain in a set
 // is incompatible with every other domain in the set
 let chemistryDomains = [
-    "Biochemistry", 
-    "Chemistry (general)", 
-    "Chemical Engineering", 
-    "Organic Chemistry"
-  ]
+"Biochemistry", 
+"Chemistry (general)", 
+"Chemical Engineering", 
+"Organic Chemistry"
+]
 let physicsDomains = [
 "Physics (general)", 
 "Engineering (general)", 
@@ -29,9 +29,9 @@ let computerScienceDomains = [
 
 var domainIncompatibilities = {}
 function initializeDomainIncompatibilities(domainSet) {
-for (let domain of domainSet) {
-    domainIncompatibilities[domain] = domainSet.filter(d => d !== domain)
-}
+    for (let domain of domainSet) {
+        domainIncompatibilities[domain] = domainSet.filter(d => d !== domain)
+    }
 }
 initializeDomainIncompatibilities(chemistryDomains)
 initializeDomainIncompatibilities(physicsDomains)
@@ -42,57 +42,57 @@ domainIncompatibilities["Biochemistry"].push(...["Genetics", "Molecular Biology"
 domainIncompatibilities["Math"] = computerScienceDomains.concat(physicsDomains)
 
 async function assignRecordToExpert(table, record, person, validator_idx) {
-console.assert(record.getCellValue(`Assigned Expert Validator ${validator_idx+1}`) === null)
-await table.updateRecordAsync(record, {
-    [`Assigned Expert Validator ${validator_idx+1} (Uncompleted)`]: [{id: person.id}],
-    [`Assigned Expert Validator ${validator_idx+1}`]: person.name
-});
-}  
-
-async function assignExpertValidators(records, people) {
-console.log(`Assigning expert validators to ${records.length} records...`)
-let sorted_people = people.sort((a, b) => a.getCellValue("Num Assigned Expert Val") - b.getCellValue("Num Assigned Expert Val"))
-// only assign expert validators who are active and not NULL
-sorted_people = sorted_people.filter(person => person.getCellValueAsString("Active Expert Validator") === "checked" && person.name !== "NULL")
-sorted_people = sorted_people.filter(person => person.getCellValueAsString("Num Expert Validations To Be Assigned") > 0)
-console.log(sorted_people.map(person => person.name))
-
-let proposals = [];
-let proposedRecordIds = new Set();
-
-for (let person of sorted_people) {
-    console.log(person.name)
-    let personDomains = person.getCellValue("Domain").map(domain => domain.name);
-    let assignableRecords = records.filter(record => {
-        let domain = record.getCellValueAsString("Question Domain");
-        let isRevised = record.getCellValueAsString("Is Revised") === "True";
-        let validator_idx = isRevised ? 1 : 0;
-        let proposedKey = `${record.id}-${validator_idx}`;
-
-        return personDomains.includes(domain)
-        && record.getCellValueAsString("Inactive") !== "checked" // don't assign to inactive questions
-        && record.getCellValueAsString("Linked Expert") !== person.name // don't assign the expert validator to their own question
-        && record.getCellValueAsString("Assigned Expert Validator 1") !== person.name
-        && record.getCellValueAsString("Assigned Expert Validator 2") !== person.name
-        && ((record.getCellValue("Assigned Expert Validator 1") === null && !isRevised)
-        || (record.getCellValue("Assigned Expert Validator 2") === null && isRevised))
-        && !proposedRecordIds.has(proposedKey)
-        })
-    console.log(assignableRecords.map(record => record.name))
-
-    for (let record of assignableRecords) {
-    var validator_idx = 0;
-    if (record.getCellValueAsString("Is Revised") === "True") {
-        validator_idx = 1;
-    }
     console.assert(record.getCellValue(`Assigned Expert Validator ${validator_idx+1}`) === null)
-    proposals.push({record: record, person: person, validator_idx: validator_idx});
-    let proposedKey = `${record.id}-${validator_idx}`;
-    proposedRecordIds.add(proposedKey);
-    }
+    await table.updateRecordAsync(record, {
+        [`Assigned Expert Validator ${validator_idx+1} (Uncompleted)`]: [{id: person.id}],
+        [`Assigned Expert Validator ${validator_idx+1}`]: person.name
+    });
 }
 
-return proposals;
+async function assignExpertValidators(records, people) {
+    console.log(`Assigning expert validators to ${records.length} records...`)
+    let sorted_people = people.sort((a, b) => a.getCellValue("Num Assigned Expert Val") - b.getCellValue("Num Assigned Expert Val"))
+    // only assign expert validators who are active and not NULL
+    sorted_people = sorted_people.filter(person => person.getCellValueAsString("Active Expert Validator") === "checked" && person.name !== "NULL")
+    sorted_people = sorted_people.filter(person => person.getCellValueAsString("Num Expert Validations To Be Assigned") > 0)
+    console.log(sorted_people.map(person => person.name))
+
+    let proposals = [];
+    let proposedRecordIds = new Set();
+
+    for (let person of sorted_people) {
+        console.log(person.name)
+        let personDomains = person.getCellValue("Domain").map(domain => domain.name);
+        let assignableRecords = records.filter(record => {
+            let domain = record.getCellValueAsString("Question Domain");
+            let isRevised = record.getCellValueAsString("Is Revised") === "True";
+            let validator_idx = isRevised ? 1 : 0;
+            let proposedKey = `${record.id}-${validator_idx}`;
+
+            return personDomains.includes(domain)
+            && record.getCellValueAsString("Inactive") !== "checked" // don't assign to inactive questions
+            && record.getCellValueAsString("Linked Expert") !== person.name // don't assign the expert validator to their own question
+            && record.getCellValueAsString("Assigned Expert Validator 1") !== person.name
+            && record.getCellValueAsString("Assigned Expert Validator 2") !== person.name
+            && ((record.getCellValue("Assigned Expert Validator 1") === null && !isRevised)
+            || (record.getCellValue("Assigned Expert Validator 2") === null && isRevised))
+            && !proposedRecordIds.has(proposedKey)
+            })
+        console.log(assignableRecords.map(record => record.name))
+
+        for (let record of assignableRecords) {
+        var validator_idx = 0;
+        if (record.getCellValueAsString("Is Revised") === "True") {
+            validator_idx = 1;
+        }
+        console.assert(record.getCellValue(`Assigned Expert Validator ${validator_idx+1}`) === null)
+        proposals.push({record: record, person: person, validator_idx: validator_idx});
+        let proposedKey = `${record.id}-${validator_idx}`;
+        proposedRecordIds.add(proposedKey);
+        }
+    }
+
+    return proposals;
 }
 
 async function assignRecordToNonExpert(table, record, person, validator_idx) {
@@ -147,7 +147,7 @@ async function assignNonExpertValidators(records, people) {
         for (let i = 0; i < numRecordsToAssign; i++) {
             for (let j = 0; j < 3; j++) {
                 if (assignableRecords[i].getCellValue(`Assigned Non-Expert Validator ${j+1}`) === null
-                    && !proposedRecords.has(assignableRecords[i].id+"-"+j)) {
+                        && !proposedRecords.has(assignableRecords[i].id+"-"+j)) {
                     proposals.push({record: assignableRecords[i], person: person, validator_idx: j})
                     proposedRecords.add(assignableRecords[i].id+"-"+j);
                     console.log(`Proposed assignment of ${person.name} to ${assignableRecords[i].name}`)
