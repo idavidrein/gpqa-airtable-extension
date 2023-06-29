@@ -81,14 +81,14 @@ async function assignExpertValidators(records, people) {
         console.log(assignableRecords.map(record => record.name))
 
         for (let record of assignableRecords) {
-        var validator_idx = 0;
-        if (record.getCellValueAsString("Is Revised") === "True") {
-            validator_idx = 1;
-        }
-        console.assert(record.getCellValue(`Assigned Expert Validator ${validator_idx+1}`) === null)
-        proposals.push({record: record, person: person, validator_idx: validator_idx});
-        let proposedKey = `${record.id}-${validator_idx}`;
-        proposedRecordIds.add(proposedKey);
+            var validator_idx = 0;
+            if (record.getCellValueAsString("Is Revised") === "True") {
+                validator_idx = 1;
+            }
+            console.assert(record.getCellValue(`Assigned Expert Validator ${validator_idx+1}`) === null)
+            proposals.push({record: record, person: person, validator_idx: validator_idx});
+            let proposedKey = `${record.id}-${validator_idx}`;
+            proposedRecordIds.add(proposedKey);
         }
     }
 
