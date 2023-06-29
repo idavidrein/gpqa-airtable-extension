@@ -32,7 +32,8 @@ const Proposal = ({proposal, onApprove, onReject}) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', padding: '10px', border: '1px solid gray', borderRadius: '5px' }}>
     <div>
       <strong>Record:</strong> {proposal.record.name} <br />
-      <strong>Expert:</strong> {proposal.person.name} <br />
+      <strong>Person domains:</strong> {proposal.person_domains} <br />
+      <strong>Question domain:</strong> {proposal.question_domain} <br />
       <strong>Validator Index:</strong> {proposal.validator_idx + 1}
     </div>
     <div>

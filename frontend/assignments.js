@@ -148,7 +148,13 @@ async function assignNonExpertValidators(records, people) {
             for (let j = 0; j < 3; j++) {
                 if (record.getCellValue(`Assigned Non-Expert Validator ${j+1}`) === null
                         && !proposedRecords.has(record.id+"-"+j)) {
-                    proposals.push({record: record, person: person, validator_idx: j})
+                    proposals.push({
+                        record: record, 
+                        person: person, 
+                        validator_idx: j, 
+                        person_domains: personDomains.join(", "),
+                        question_domain: record.getCellValueAsString("Question Domain")
+                    })
                     proposedRecords.add(record.id+"-"+j);
                     console.log(`Proposed assignment of ${person.name} to ${record.name}`)
                     break;
