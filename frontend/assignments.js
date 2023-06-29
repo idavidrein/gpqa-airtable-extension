@@ -144,13 +144,13 @@ async function assignNonExpertValidators(records, people) {
             console.log(`Only ${assignableRecords.length} records to assign to ${person.name}...`)
             continue;
         }
-        for (let i = 0; i < numRecordsToAssign; i++) {
+        for (let record of assignableRecords) {
             for (let j = 0; j < 3; j++) {
-                if (assignableRecords[i].getCellValue(`Assigned Non-Expert Validator ${j+1}`) === null
-                        && !proposedRecords.has(assignableRecords[i].id+"-"+j)) {
-                    proposals.push({record: assignableRecords[i], person: person, validator_idx: j})
-                    proposedRecords.add(assignableRecords[i].id+"-"+j);
-                    console.log(`Proposed assignment of ${person.name} to ${assignableRecords[i].name}`)
+                if (record.getCellValue(`Assigned Non-Expert Validator ${j+1}`) === null
+                        && !proposedRecords.has(record.id+"-"+j)) {
+                    proposals.push({record: record, person: person, validator_idx: j})
+                    proposedRecords.add(record.id+"-"+j);
+                    console.log(`Proposed assignment of ${person.name} to ${record.name}`)
                     break;
                 }
             }
