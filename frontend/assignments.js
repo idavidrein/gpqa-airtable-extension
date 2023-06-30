@@ -63,6 +63,7 @@ async function assignExpertValidators(records, people) {
     for (let person of sorted_people) {
         console.log(person.name)
         let personDomains = person.getCellValue("Domain").map(domain => domain.name);
+        let numRecordsToAssign = person.getCellValue("Num Expert Validations To Be Assigned");
         let assignableRecords = records.filter(record => {
             let domain = record.getCellValueAsString("Question Domain");
             let isRevised = record.getCellValueAsString("Is Revised") === "True";
@@ -80,7 +81,8 @@ async function assignExpertValidators(records, people) {
             })
         console.log(assignableRecords.map(record => record.name))
 
-        for (let record of assignableRecords) {
+        for (let i = 0; i < Math.min(numRecordsToAssign, assignableRecords.length); i++) {
+            var record = assignableRecords[i];
             var validator_idx = 0;
             if (record.getCellValueAsString("Is Revised") === "True") {
                 validator_idx = 1;
@@ -124,6 +126,7 @@ async function assignNonExpertValidators(records, people) {
         console.log(proposedRecords)
         console.log(person.name)
         let personDomains = person.getCellValue("Domain").map(domain => domain.name);
+        let numRecordsToAssign = person.getCellValue("Num Non-Expert Validations To Be Assigned");
         let assignableRecords = records.filter(record => {
             let recordDomain = record.getCellValueAsString("Question Domain");
             return !personDomains.includes(recordDomain)
@@ -139,12 +142,13 @@ async function assignNonExpertValidators(records, people) {
             })
         console.log(assignableRecords.map(record => record.name))
 
-        let numRecordsToAssign = 3;
-        if (assignableRecords.length < numRecordsToAssign) {
+        let minRecordsToAssign = 3;
+        if (assignableRecords.length < minRecordsToAssign) {
             console.log(`Only ${assignableRecords.length} records to assign to ${person.name}...`)
             continue;
         }
-        for (let record of assignableRecords) {
+        for (let i = 0; i < Math.min(numRecordsToAssign, assignableRecords.length); i++) {
+            var record = assignableRecords[i];
             for (let j = 0; j < 3; j++) {
                 if (record.getCellValue(`Assigned Non-Expert Validator ${j+1}`) === null
                         && !proposedRecords.has(record.id+"-"+j)) {
