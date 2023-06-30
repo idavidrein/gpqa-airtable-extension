@@ -142,11 +142,6 @@ async function assignNonExpertValidators(records, people) {
             })
         console.log(assignableRecords.map(record => record.name))
 
-        let minRecordsToAssign = 3;
-        if (assignableRecords.length < minRecordsToAssign) {
-            console.log(`Only ${assignableRecords.length} records to assign to ${person.name}...`)
-            continue;
-        }
         for (let i = 0; i < Math.min(numRecordsToAssign, assignableRecords.length); i++) {
             var record = assignableRecords[i];
             for (let j = 0; j < 3; j++) {

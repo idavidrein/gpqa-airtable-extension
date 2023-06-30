@@ -5,7 +5,7 @@ import {assignRecordToExpert, assignExpertValidators, assignRecordToNonExpert, a
 
 
 // Custom Hooks
-const useAssignments = (assigner, assignRecord) => {
+const useAssignments = (table, assigner, assignRecord) => {
   const [proposals, setProposals] = useState([]);
 
   const assign = useCallback(async (records, people) => {
@@ -83,8 +83,8 @@ const Interface = () => {
   const notShuffledRecords = useRecords(notShuffled);
   const records = useRecords(table);
 
-  const {proposals: expertProposals, assign: assignExpert, approve: approveExpert, cancel: cancelExpert} = useAssignments(assignExpertValidators, assignRecordToExpert);
-  const {proposals: nonExpertProposals, assign: assignNonExpert, approve: approveNonExpert, cancel: cancelNonExpert} = useAssignments(assignNonExpertValidators, assignRecordToNonExpert);
+  const {proposals: expertProposals, assign: assignExpert, approve: approveExpert, cancel: cancelExpert} = useAssignments(table, assignExpertValidators, assignRecordToExpert);
+  const {proposals: nonExpertProposals, assign: assignNonExpert, approve: approveNonExpert, cancel: cancelNonExpert} = useAssignments(table, assignNonExpertValidators, assignRecordToNonExpert);
 
   const onShuffleClick = useCallback(() => shuffleRecords(table, notShuffledRecords), [table, notShuffledRecords]);
 
