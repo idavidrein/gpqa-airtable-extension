@@ -72,7 +72,7 @@ async function assignExpertValidators(records, people) {
 
             return personDomains.includes(domain)
             && record.getCellValueAsString("Inactive") !== "checked" // don't assign to inactive questions
-            && record.getCellValueAsString("Linked Expert") !== person.name // don't assign the expert validator to their own question
+            && record.getCellValueAsString("Question Writer") !== person.name // don't assign the expert validator to their own question
             && record.getCellValueAsString("Assigned Expert Validator 1") !== person.name
             && record.getCellValueAsString("Assigned Expert Validator 2") !== person.name
             && ((record.getCellValue("Assigned Expert Validator 1") === null && !isRevised)
