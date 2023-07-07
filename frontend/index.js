@@ -1,7 +1,7 @@
 import {initializeBlock, useBase, useRecords, Button} from '@airtable/blocks/ui';
 import React, { useState, useCallback } from 'react';
 import {shuffleRecords} from './shuffle-options';
-import {assignRecordToExpert, assignExpertValidators, assignRecordToNonExpert, assignNonExpertValidators} from './assignments.js';
+import * as assignmentFns from './assignments.js';
 
 
 // Custom Hooks
@@ -72,6 +72,19 @@ const ProposalList = ({proposals, onApprove, onReject}) => {
   ));
 };
 
+const SuggestionsList = ({suggestions, title}) => {
+  const hasSuggestions = Object.keys(suggestions).length > 0;
+  return hasSuggestions ? (
+    <div>
+      <h3>{title}</h3>
+      {Object.entries(suggestions).map(([name, count]) => (
+        <p key={name}><strong>{name}:</strong> {count}</p>
+      ))}
+    </div>
+  ) : null;
+};
+
+
 // The main component
 const Interface = () => {
   const base = useBase();
@@ -80,11 +93,15 @@ const Interface = () => {
   const peopleTable = base.getTable("Experts");
   const people = useRecords(peopleTable);
 
+  const [expertSuggestions, setExpertSuggestions] = useState({});
+  const [nonExpertSuggestions, setNonExpertSuggestions] = useState({});
+
+
   const notShuffledRecords = useRecords(notShuffled);
   const records = useRecords(table);
 
-  const {proposals: expertProposals, assign: assignExpert, approve: approveExpert, cancel: cancelExpert} = useAssignments(table, assignExpertValidators, assignRecordToExpert);
-  const {proposals: nonExpertProposals, assign: assignNonExpert, approve: approveNonExpert, cancel: cancelNonExpert} = useAssignments(table, assignNonExpertValidators, assignRecordToNonExpert);
+  const {proposals: expertProposals, assign: assignExpert, approve: approveExpert, cancel: cancelExpert} = useAssignments(table, assignmentFns.assignExpertValidators, assignmentFns.assignRecordToExpert);
+  const {proposals: nonExpertProposals, assign: assignNonExpert, approve: approveNonExpert, cancel: cancelNonExpert} = useAssignments(table, assignmentFns.assignNonExpertValidators, assignmentFns.assignRecordToNonExpert);
 
   const onShuffleClick = useCallback(() => shuffleRecords(table, notShuffledRecords), [table, notShuffledRecords]);
 
@@ -92,14 +109,29 @@ const Interface = () => {
 
   const onNonExpertClick = useCallback(() => assignNonExpert(records, people), [assignNonExpert, records, people]);
 
+  const onSuggestEVsClick = useCallback(async () => {
+    const suggestions = await assignmentFns.suggestExpertValidators(records, people);
+    setExpertSuggestions(suggestions);
+  }, [records, people]);
+  
+  const onSuggestNEVsClick = useCallback(async () => {
+    const suggestions = await assignmentFns.suggestNonExpertValidators(records, people);
+    setNonExpertSuggestions(suggestions);
+  }, [records, people]);
+  
+
   return (
     <div>
       <Button onClick={onShuffleClick}>Shuffle options</Button><br></br>
       <Button onClick={onExpertClick}>Assign Expert Validators</Button><br></br>
       <Button onClick={onNonExpertClick}>Assign Non-Expert Validators</Button><br></br>
+      <Button onClick={onSuggestEVsClick}>Suggest Expert Validators</Button><br></br>
+      <Button onClick={onSuggestNEVsClick}>Suggest Non-Expert Validators</Button><br></br>
       <br></br>
       <ProposalList proposals={expertProposals} onApprove={approveExpert} onReject={cancelExpert} /> 
       <ProposalList proposals={nonExpertProposals} onApprove={approveNonExpert} onReject={cancelNonExpert} />
+    <SuggestionsList suggestions={expertSuggestions} title="Expert Assignment Suggestions"/>
+    <SuggestionsList suggestions={nonExpertSuggestions} title="Non-Expert Assignment Suggestions"/>
     </div>
   );
 }

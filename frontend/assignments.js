@@ -49,12 +49,14 @@ async function assignRecordToExpert(table, record, person, validator_idx) {
     });
 }
 
-async function assignExpertValidators(records, people) {
+async function assignExpertValidators(records, people, suggestNew) {
     console.log(`Assigning expert validators to ${records.length} records...`)
     let sorted_people = people.sort((a, b) => a.getCellValue("Num Assigned Expert Val") - b.getCellValue("Num Assigned Expert Val"))
     // only assign expert validators who are active and not NULL
     sorted_people = sorted_people.filter(person => person.getCellValueAsString("Active Expert Validator") === "checked" && person.name !== "NULL")
-    sorted_people = sorted_people.filter(person => person.getCellValueAsString("Num Expert Validations To Be Assigned") > 0)
+    if (!suggestNew) {
+        sorted_people = sorted_people.filter(person => person.getCellValueAsString("Num Expert Validations To Be Assigned") > 0)
+    }
     console.log(sorted_people.map(person => person.name))
 
     let proposals = [];
@@ -79,7 +81,12 @@ async function assignExpertValidators(records, people) {
             || (record.getCellValue("Assigned Expert Validator 2") === null && isRevised))
             && !proposedRecordIds.has(proposedKey)
             })
-        console.log(assignableRecords.map(record => record.name))
+        console.log("Assignable EVs", assignableRecords.map(record => record.name))
+
+        if (assignableRecords.length < 2) {
+            console.log(`${person.name} has ${assignableRecords.length} records to assign, skipping...`)
+            continue;
+        }
 
         for (let i = 0; i < Math.min(numRecordsToAssign, assignableRecords.length); i++) {
             var record = assignableRecords[i];
@@ -97,6 +104,22 @@ async function assignExpertValidators(records, people) {
     return proposals;
 }
 
+async function suggestExpertValidators(records, people) {
+    var suggestions = await assignExpertValidators(records, people, true);
+    // map to a list of people and the number of records they can be assigned to
+    if (suggestions.length === 0) {
+        return {};
+    }
+    var suggestionsByPerson = suggestions.reduce((suggestionsByPerson, suggestion) => {
+        if (!suggestionsByPerson[suggestion.person.name]) {
+            suggestionsByPerson[suggestion.person.name] = 0;
+        }
+        suggestionsByPerson[suggestion.person.name] += 1;
+        return suggestionsByPerson;
+    });
+    return suggestionsByPerson;
+}
+
 async function assignRecordToNonExpert(table, record, person, validator_idx) {
     console.assert(record.getCellValue(`Assigned Non-Expert Validator ${validator_idx+1}`) === null);
     await table.updateRecordAsync(record, {
@@ -105,12 +128,14 @@ async function assignRecordToNonExpert(table, record, person, validator_idx) {
     });
 }
 
-async function assignNonExpertValidators(records, people) {
+async function assignNonExpertValidators(records, people, suggestNew) {
     console.log(`Assigning non-expert validators to ${records.length} records...`)
     var sorted_people = people.sort((a, b) => a.getCellValue("Num Assigned Non-Expert Val") - b.getCellValue("Num Assigned Non-Expert Val"))
     // only assign non-expert validators who are active and not NULL
     sorted_people = sorted_people.filter(person => person.getCellValueAsString("Active Non-Expert Validator") === "checked" && person.name !== "NULL")
-    sorted_people = sorted_people.filter(person => person.getCellValueAsString("Num Non-Expert Validations To Be Assigned") > 0)
+    if (!suggestNew) {
+        sorted_people = sorted_people.filter(person => person.getCellValueAsString("Num Non-Expert Validations To Be Assigned") > 0)
+    }
     console.log(sorted_people.map(person => person.name))
     console.log('------------------')
 
@@ -123,7 +148,6 @@ async function assignNonExpertValidators(records, people) {
     let proposedRecords = new Set();
 
     for (let person of sorted_people) {
-        console.log(proposedRecords)
         console.log(person.name)
         let personDomains = person.getCellValue("Domain").map(domain => domain.name);
         let numRecordsToAssign = person.getCellValue("Num Non-Expert Validations To Be Assigned");
@@ -140,9 +164,16 @@ async function assignNonExpertValidators(records, people) {
                 || (!proposedRecords.has(record.id+"-1") && record.getCellValue("Assigned Non-Expert Validator 2") === null)
                 || (!proposedRecords.has(record.id+"-2") && record.getCellValue("Assigned Non-Expert Validator 3") === null))
             })
-        console.log(assignableRecords.map(record => record.name))
+        console.log(`Assigable NEVs: ${assignableRecords.map(record => record.name)}`)
 
-        for (let i = 0; i < Math.min(numRecordsToAssign, assignableRecords.length); i++) {
+        if (assignableRecords.length < 3) {
+            console.log(`${person.name} has ${assignableRecords.length} records to assign, skipping...`)
+            continue;
+        }
+
+        var numRecords = suggestNew ? assignableRecords.length : Math.min(numRecordsToAssign, assignableRecords.length);
+
+        for (let i = 0; i < numRecords; i++) {
             var record = assignableRecords[i];
             for (let j = 0; j < 3; j++) {
                 if (record.getCellValue(`Assigned Non-Expert Validator ${j+1}`) === null
@@ -165,5 +196,23 @@ async function assignNonExpertValidators(records, people) {
     return proposals;
 }
 
+async function suggestNonExpertValidators(records, people) {
+    var suggestions = await assignNonExpertValidators(records, people, true);
+    if (suggestions.length === 0) {
+        return {};
+    }
+    // map to a list of people and the number of records they can be assigned to
+    var suggestionsByPerson = suggestions.reduce((suggestionsByPerson, suggestion) => {
+        if (!suggestionsByPerson[suggestion.person.name]) {
+            suggestionsByPerson[suggestion.person.name] = 0;
+        }
+        suggestionsByPerson[suggestion.person.name] += 1;
+        return suggestionsByPerson;
+    }, {});
+    console.log('suggestionsByPerson')
+    console.log(suggestionsByPerson);
+    return suggestionsByPerson;
+}
 
-export {assignRecordToExpert, assignExpertValidators, assignRecordToNonExpert, assignNonExpertValidators}
+
+export {assignRecordToExpert, assignExpertValidators, assignRecordToNonExpert, assignNonExpertValidators, suggestExpertValidators, suggestNonExpertValidators}
