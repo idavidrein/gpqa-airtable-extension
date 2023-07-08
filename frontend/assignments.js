@@ -88,7 +88,9 @@ async function assignExpertValidators(records, people, suggestNew) {
             continue;
         }
 
-        for (let i = 0; i < Math.min(numRecordsToAssign, assignableRecords.length); i++) {
+        var numRecords = suggestNew ? assignableRecords.length : Math.min(numRecordsToAssign, assignableRecords.length);
+
+        for (let i = 0; i < numRecords; i++) {
             var record = assignableRecords[i];
             var validator_idx = 0;
             if (record.getCellValueAsString("Is Revised") === "True") {
@@ -116,7 +118,7 @@ async function suggestExpertValidators(records, people) {
         }
         suggestionsByPerson[suggestion.person.name] += 1;
         return suggestionsByPerson;
-    });
+    }, {});
     return suggestionsByPerson;
 }
 
