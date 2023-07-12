@@ -97,7 +97,12 @@ async function assignExpertValidators(records, people, suggestNew) {
                 validator_idx = 1;
             }
             console.assert(record.getCellValue(`Assigned Expert Validator ${validator_idx+1}`) === null)
-            proposals.push({record: record, person: person, validator_idx: validator_idx});
+            proposals.push({record: record, 
+                person: person, 
+                validator_idx: validator_idx, 
+                person_domains: personDomains.join(", "), 
+                question_domain: record.getCellValueAsString("Question Domain")
+            });
             let proposedKey = `${record.id}-${validator_idx}`;
             proposedRecordIds.add(proposedKey);
         }
