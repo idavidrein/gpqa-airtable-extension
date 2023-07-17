@@ -1,5 +1,7 @@
 // a set of domains listed and "initialized" below indicates that each domain in a set
 // is incompatible with every other domain in the set
+// The keys in domainIncompatibilities represent a person's domain, and the values are the domains
+// that they cannot be a non-expert validator for
 let chemistryDomains = [
 "Biochemistry", 
 "Chemistry (general)", 
@@ -21,6 +23,7 @@ let biologyDomains = [
 "Biology (general)",
 "Genetics",
 "Molecular Biology",
+"Organic Chemistry"
 ]
 let computerScienceDomains = [
 "Computer Science",
