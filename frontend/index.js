@@ -72,13 +72,23 @@ const ProposalList = ({proposals, onApprove, onReject}) => {
   ));
 };
 
-const SuggestionsList = ({suggestions, title}) => {
+const Suggestion = ({name, count, onOffer, onCancel}) => (
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+    <strong>{name}:</strong> {count}
+    <div>
+      <Button variant="primary" onClick={() => onOffer(name, count)} style={{ marginRight: '10px' }}>Offer</Button>
+      <Button variant="danger" onClick={() => onCancel(name)}>Cancel</Button>
+    </div>
+  </div>
+);
+
+const SuggestionsList = ({suggestions, title, onOffer, onCancel}) => {
   const hasSuggestions = Object.keys(suggestions).length > 0;
   return hasSuggestions ? (
     <div>
       <h3>{title}</h3>
       {Object.entries(suggestions).map(([name, count]) => (
-        <p key={name}><strong>{name}:</strong> {count}</p>
+        <Suggestion key={name} name={name} count={count} onOffer={onOffer} onCancel={onCancel} />
       ))}
     </div>
   ) : null;
@@ -92,6 +102,8 @@ const Interface = () => {
   const notShuffled = table.getView("Not Shuffled")
   const peopleTable = base.getTable("Experts");
   const people = useRecords(peopleTable);
+
+  const assignmentsTable = base.getTable("Assignments");
 
   const [expertSuggestions, setExpertSuggestions] = useState({});
   const [nonExpertSuggestions, setNonExpertSuggestions] = useState({});
@@ -118,7 +130,47 @@ const Interface = () => {
     const suggestions = await assignmentFns.suggestNonExpertValidators(records, people);
     setNonExpertSuggestions(suggestions);
   }, [records, people]);
+
+  const removeFromSuggestions = useCallback((prevSuggestions, name) => {
+    const newSuggestions = {...prevSuggestions};
+    delete newSuggestions[name];
+    return newSuggestions;
+  }, []);  
+
+  const sendExpertOffer = useCallback(async (name, numEVs) => {
+    // create a record in the Assignments table with certain parameters
+    const person = people.find(p => p.name === name);
+    const fields = {
+      "Name": [{id: person.id}],
+      "Status": {name: "Pending Acceptance"},
+      "Expert Validations": numEVs,
+      "Description": `${numEVs} expert validations`
+    };
+    await assignmentsTable.createRecordAsync(fields);
+    setExpertSuggestions(prevSuggestions => removeFromSuggestions(prevSuggestions, name));
+  }, [removeFromSuggestions, people, assignmentsTable]);
+    
+  const cancelExpertOffer = useCallback((name) => {
+    setExpertSuggestions(prevSuggestions => removeFromSuggestions(prevSuggestions, name));
+  }, [removeFromSuggestions]);
   
+  const sendNonExpertOffer = useCallback(async (name, numNEVs) => {
+    // create a record in the Assignments table with certain parameters
+    const person = people.find(p => p.name === name);
+    const fields = {
+      "Name": [{id: person.id}],
+      "Status": {name: "Pending Acceptance"},
+      "Non-Expert Validations": numNEVs,
+      "Description": `${numNEVs} non-expert validations`
+    };
+    await assignmentsTable.createRecordAsync(fields);
+ 
+    setNonExpertSuggestions(prevSuggestions => removeFromSuggestions(prevSuggestions, name));
+  }, [removeFromSuggestions]);
+  
+  const cancelNonExpertOffer = useCallback((name) => {
+    setNonExpertSuggestions(prevSuggestions => removeFromSuggestions(prevSuggestions, name));
+  }, [removeFromSuggestions]);  
 
   return (
     <div>
@@ -130,8 +182,8 @@ const Interface = () => {
       <br></br>
       <ProposalList proposals={expertProposals} onApprove={approveExpert} onReject={cancelExpert} /> 
       <ProposalList proposals={nonExpertProposals} onApprove={approveNonExpert} onReject={cancelNonExpert} />
-    <SuggestionsList suggestions={expertSuggestions} title="Expert Assignment Suggestions"/>
-    <SuggestionsList suggestions={nonExpertSuggestions} title="Non-Expert Assignment Suggestions"/>
+      <SuggestionsList suggestions={expertSuggestions} title="Expert Assignment Suggestions" onOffer={sendExpertOffer} onCancel={cancelExpertOffer}/>
+      <SuggestionsList suggestions={nonExpertSuggestions} title="Non-Expert Assignment Suggestions" onOffer={sendNonExpertOffer} onCancel={cancelNonExpertOffer}/>
     </div>
   );
 }
