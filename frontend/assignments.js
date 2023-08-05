@@ -121,12 +121,15 @@ async function suggestExpertValidators(records, people) {
         return {};
     }
     var suggestionsByPerson = suggestions.reduce((suggestionsByPerson, suggestion) => {
+        const accuracy = suggestion.person.getCellValueAsString("Expert Accuracy Display");
+        const numAssigned = suggestion.person.getCellValue("Num Uncompleted Expert Validations");
         if (!suggestionsByPerson[suggestion.person.name]) {
-            suggestionsByPerson[suggestion.person.name] = 0;
+            suggestionsByPerson[suggestion.person.name] = {count: 0, accuracy: accuracy, numAssigned: numAssigned};
         }
-        suggestionsByPerson[suggestion.person.name] += 1;
+        suggestionsByPerson[suggestion.person.name].count += 1;
         return suggestionsByPerson;
     }, {});
+    console.log(suggestionsByPerson)
     return suggestionsByPerson;
 }
 

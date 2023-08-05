@@ -72,9 +72,11 @@ const ProposalList = ({proposals, onApprove, onReject}) => {
   ));
 };
 
-const Suggestion = ({name, count, onOffer, onCancel}) => (
+const Suggestion = ({name, count, accuracy, numAssigned, onOffer, onCancel}) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-    <strong>{name}:</strong> {count}
+    <strong>{name}:</strong> {count} <br />
+    <strong>Accuracy:</strong> {accuracy} <br />
+    <strong>Num Currently Assigned:</strong> {numAssigned}
     <div>
       <Button variant="primary" onClick={() => onOffer(name, count)} style={{ marginRight: '10px' }}>Offer</Button>
       <Button variant="danger" onClick={() => onCancel(name)}>Cancel</Button>
@@ -87,8 +89,8 @@ const SuggestionsList = ({suggestions, title, onOffer, onCancel}) => {
   return hasSuggestions ? (
     <div>
       <h3>{title}</h3>
-      {Object.entries(suggestions).map(([name, count]) => (
-        <Suggestion key={name} name={name} count={count} onOffer={onOffer} onCancel={onCancel} />
+      {Object.entries(suggestions).map(([name, info]) => (
+        <Suggestion key={name} name={name} count={info.count} accuracy={info.accuracy} numAssigned={info.numAssigned} onOffer={onOffer} onCancel={onCancel} />
       ))}
     </div>
   ) : null;
