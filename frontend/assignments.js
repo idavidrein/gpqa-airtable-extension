@@ -216,10 +216,11 @@ async function suggestNonExpertValidators(records, people) {
     }
     // map to a list of people and the number of records they can be assigned to
     var suggestionsByPerson = suggestions.reduce((suggestionsByPerson, suggestion) => {
+        const numAssigned = suggestion.person.getCellValue("Num Uncompleted Non-Expert Validations");
         if (!suggestionsByPerson[suggestion.person.name]) {
-            suggestionsByPerson[suggestion.person.name] = 0;
+            suggestionsByPerson[suggestion.person.name] = {count: 0, accuracy: "N/A", numAssigned: numAssigned};
         }
-        suggestionsByPerson[suggestion.person.name] += 1;
+        suggestionsByPerson[suggestion.person.name].count += 1;
         return suggestionsByPerson;
     }, {});
     console.log('suggestionsByPerson')
