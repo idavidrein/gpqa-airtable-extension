@@ -44,6 +44,9 @@ initializeDomainIncompatibilities(computerScienceDomains)
 domainIncompatibilities["Biochemistry"].push(...["Genetics", "Molecular Biology"])
 domainIncompatibilities["Math"] = computerScienceDomains.concat(physicsDomains)
 
+let maxEVSuggestions = 6;
+let maxNEVSuggestions = 9;
+
 async function assignRecordToExpert(table, record, person, validator_idx) {
     console.assert(record.getCellValue(`Assigned Expert Validator ${validator_idx+1}`) === null)
     await table.updateRecordAsync(record, {
@@ -91,7 +94,7 @@ async function assignExpertValidators(records, people, suggestNew) {
             continue;
         }
 
-        var numRecords = suggestNew ? assignableRecords.length : Math.min(numRecordsToAssign, assignableRecords.length);
+        var numRecords = suggestNew ? Math.min(maxEVSuggestions, assignableRecords.length) : Math.min(numRecordsToAssign, assignableRecords.length);
 
         for (let i = 0; i < numRecords; i++) {
             var record = assignableRecords[i];
@@ -184,7 +187,7 @@ async function assignNonExpertValidators(records, people, suggestNew) {
             continue;
         }
 
-        var numRecords = suggestNew ? assignableRecords.length : Math.min(numRecordsToAssign, assignableRecords.length);
+        var numRecords = suggestNew ? Math.min(maxNEVSuggestions, assignableRecords.length) : Math.min(numRecordsToAssign, assignableRecords.length);
 
         for (let i = 0; i < numRecords; i++) {
             var record = assignableRecords[i];
@@ -217,8 +220,9 @@ async function suggestNonExpertValidators(records, people) {
     // map to a list of people and the number of records they can be assigned to
     var suggestionsByPerson = suggestions.reduce((suggestionsByPerson, suggestion) => {
         const numAssigned = suggestion.person.getCellValue("Num Uncompleted Non-Expert Validations");
+        const numCompleted = suggestion.person.getCellValue("Num Assigned Non-Expert Val");
         if (!suggestionsByPerson[suggestion.person.name]) {
-            suggestionsByPerson[suggestion.person.name] = {count: 0, accuracy: "N/A", numAssigned: numAssigned};
+            suggestionsByPerson[suggestion.person.name] = {count: 0, accuracy: `_ / ${numCompleted}`, numAssigned: numAssigned};
         }
         suggestionsByPerson[suggestion.person.name].count += 1;
         return suggestionsByPerson;
