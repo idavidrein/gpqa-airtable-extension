@@ -57,7 +57,7 @@ async function assignRecordToExpert(table, record, person, validator_idx) {
 
 async function assignExpertValidators(records, people, suggestNew) {
     console.log(`Assigning expert validators to ${records.length} records...`)
-    let sorted_people = people.sort((a, b) => a.getCellValue("Num Assigned Expert Val") - b.getCellValue("Num Assigned Expert Val"))
+    let sorted_people = people.sort((a, b) => b.getCellValue("Expert Accuracy") - a.getCellValue("Expert Accuracy"))
     // only assign expert validators who are active and not NULL
     sorted_people = sorted_people.filter(person => person.getCellValueAsString("Active Expert Validator") === "checked" && person.name !== "NULL")
     if (!suggestNew) {
