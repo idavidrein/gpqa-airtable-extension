@@ -6,7 +6,10 @@ let chemistryDomains = [
 "Biochemistry", 
 "Chemistry (general)", 
 "Chemical Engineering", 
-"Organic Chemistry"
+"Organic Chemistry",
+"Inorganic Chemistry",
+"Physical Chemistry",
+"Analytical Chemistry"
 ]
 let physicsDomains = [
 "Physics (general)", 
@@ -149,7 +152,12 @@ async function assignNonExpertValidators(records, people, suggestNew) {
     var sorted_people = people.sort((a, b) => a.getCellValue("Num Assigned Non-Expert Val") - b.getCellValue("Num Assigned Non-Expert Val"))
     // only assign non-expert validators who are active and not NULL
     sorted_people = sorted_people.filter(person => person.getCellValueAsString("Active Non-Expert Validator") === "checked" && person.name !== "NULL")
-    if (!suggestNew) {
+    if (suggestNew) {
+        // only suggest non-expert validators who have already completed at least 3 non-expert validations
+        sorted_people = sorted_people.filter(person => person.getCellValue("Num Completed Non-Expert Validations") >= 3)
+    }
+    else {
+        // only assign non-expert validators who have non-expert validations to be assigned
         sorted_people = sorted_people.filter(person => person.getCellValueAsString("Num Non-Expert Validations To Be Assigned") > 0)
     }
     console.log(sorted_people.map(person => person.name))
