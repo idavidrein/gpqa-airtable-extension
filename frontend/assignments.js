@@ -20,7 +20,8 @@ let physicsDomains = [
 "High-energy particle physics", 
 "Relativistic Mechanics", 
 "Statistical Mechanics", 
-"Optics and Acoustics"
+"Optics and Acoustics",
+"Astrophysics"
 ]
 let biologyDomains = [
 "Biology (general)",
