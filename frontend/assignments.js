@@ -67,6 +67,9 @@ async function assignExpertValidators(records, people, suggestNew) {
     if (!suggestNew) {
         sorted_people = sorted_people.filter(person => person.getCellValueAsString("Num Expert Validations To Be Assigned") > 0)
     }
+    else {
+        sorted_people = sorted_people.filter(person => person.getCellValue("Num Uncompleted Expert Validations") < 3)
+    }
     console.log(sorted_people.map(person => person.name))
 
     let proposals = [];
@@ -156,6 +159,7 @@ async function assignNonExpertValidators(records, people, suggestNew) {
     if (suggestNew) {
         // only suggest non-expert validators who have already completed at least 3 non-expert validations
         sorted_people = sorted_people.filter(person => person.getCellValue("Num Completed Non-Expert Validations") >= 3)
+        sorted_people = sorted_people.filter(person => person.getCellValue("Num Uncompleted Non-Expert Validations") < 4)
     }
     else {
         // only assign non-expert validators who have non-expert validations to be assigned
