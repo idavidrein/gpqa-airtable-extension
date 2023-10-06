@@ -195,10 +195,10 @@ async function assignNonExpertValidators(records, people, suggestNew) {
             })
         console.log(`Assigable NEVs: ${assignableRecords.map(record => record.name)}`)
 
-        if (assignableRecords.length < 3) {
-            console.log(`${person.name} has ${assignableRecords.length} records to assign, skipping...`)
-            continue;
-        }
+        // if (assignableRecords.length < 3) {
+        //     console.log(`${person.name} has ${assignableRecords.length} records to assign, skipping...`)
+        //     continue;
+        // }
 
         var numRecords = suggestNew ? Math.min(maxNEVSuggestions, assignableRecords.length) : Math.min(numRecordsToAssign, assignableRecords.length);
 
